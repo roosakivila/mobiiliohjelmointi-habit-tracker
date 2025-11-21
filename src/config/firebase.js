@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
+//https://docs.expo.dev/guides/using-firebase/
 // Your web app's Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyBtVC_q19bM_-DB4JIXrfHxEqWINTz6Oh4",
