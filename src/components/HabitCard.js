@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function HabitCard({ habit, onToggle }) {
+export default function HabitCard({ habit, onToggle, readOnly = false }) {
     // Check if habit is completed today
     const isCompletedToday = () => {
         const today = new Date().toISOString().split('T')[0];
@@ -60,7 +60,8 @@ export default function HabitCard({ habit, onToggle }) {
                 styles.card,
                 { borderLeftColor: habit.color || '#4CAF50' }
             ]}
-            onPress={() => onToggle(habit.id, completed)}
+            onPress={() => !readOnly && onToggle(habit.id, completed)}
+            disabled={readOnly}
         >
             <View style={styles.cardContent}>
                 {/* Checkbox */}
