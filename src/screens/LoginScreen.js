@@ -1,6 +1,7 @@
 import { View, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen({ navigation }) {
 
@@ -65,6 +66,8 @@ export default function LoginScreen({ navigation }) {
 
     return (
         <View style={styles.container}>
+            <Ionicons name="checkmark-done-outline" size={64} color="#0066cc" style={styles.logo} />
+            <Text style={styles.logoText}>Buddy Habit Tracker</Text>
             <Text style={styles.title}>Login</Text>
 
             <TextInput
@@ -124,10 +127,21 @@ const styles = StyleSheet.create({
         padding: 20,
         backgroundColor: '#fff',
     },
+    logo: {
+        alignSelf: 'center',
+        marginBottom: 5,
+    },
+    logoText: {
+        fontSize: 30,
+        fontWeight: 'bold',
+        marginBottom: 20,
+        textAlign: 'center',
+        color: '#0066cc',
+    },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 30,
+        marginBottom: 20,
         textAlign: 'center',
     },
     input: {
