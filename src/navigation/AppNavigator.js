@@ -19,7 +19,7 @@ function AuthStack() {
     return (
         <Stack.Navigator
             screenOptions={{
-                headerShown: false, // Hide header for auth screens
+                headerShown: false,
             }}
         >
             <Stack.Screen name="Login" component={LoginScreen} />
