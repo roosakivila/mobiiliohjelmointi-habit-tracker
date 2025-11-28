@@ -5,6 +5,7 @@ import { collection, getDoc, doc, onSnapshot, query, where } from 'firebase/fire
 import HabitCard from '../components/HabitCard';
 import { db } from '../config/firebase';
 import { Ionicons } from '@expo/vector-icons';
+import CheerButton from '../components/CheerButton';
 
 export default function BuddyProgressScreen({ navigation }) {
 
@@ -109,6 +110,7 @@ export default function BuddyProgressScreen({ navigation }) {
                 )}
                 contentContainerStyle={styles.listContent}
             />
+            <CheerButton buddyId={buddyInfo.id} />
         </View>
     );
 }
