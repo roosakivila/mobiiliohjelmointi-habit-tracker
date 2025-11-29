@@ -11,6 +11,7 @@ import HabitListScreen from "../screens/HabitListScreen";
 import BuddyProgressScreen from "../screens/BuddyProgressScreen";
 import AddHabitScreen from "../screens/AddHabitScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import CheerMessageScreen from "../screens/CheerMessageScreen";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -76,6 +77,32 @@ function AppTabs() {
     );
 }
 
+// Root Stack that wraps AppTabs and includes modal screens
+function RootStack() {
+    return (
+        <Stack.Navigator
+            screenOptions={{
+                headerShown: false,
+            }}
+        >
+            {/* Main app with tabs */}
+            <Stack.Screen name="Main" component={AppTabs} />
+
+            {/* Modal screens */}
+            <Stack.Screen
+                name="CheerMessageScreen"
+                component={CheerMessageScreen}
+                options={{
+                    presentation: 'modal',
+                    headerShown: true,
+                    headerTitle: 'Send Cheer',
+                    headerBackTitle: 'Back',
+                }}
+            />
+        </Stack.Navigator>
+    );
+}
+
 export default function AppNavigator() {
     const { user, loading } = useAuth();
 
@@ -89,7 +116,7 @@ export default function AppNavigator() {
 
     return (
         <NavigationContainer>
-            {user ? <AppTabs /> : <AuthStack />}
+            {user ? <RootStack /> : <AuthStack />}
         </NavigationContainer>
     );
 }

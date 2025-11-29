@@ -29,9 +29,8 @@ export default {
             "expo-barcode-scanner"
         ],
         extra: {
-            API_URL: "https://api.giphy.com/v1",
-            API_KEY: "50kx4LOHiEn7V6GZaGrYpzr5DCoQUp2D",
+            API_URL: "YOUR_GIPHY_API_URL_HERE",
+            API_KEY: "YOUR_GIPHY_API_KEY_HERE",
         }
     }
 };
-
