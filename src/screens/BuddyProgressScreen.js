@@ -110,7 +110,7 @@ export default function BuddyProgressScreen({ navigation }) {
                 )}
                 contentContainerStyle={styles.listContent}
             />
-            <CheerButton buddyId={buddyInfo.id} />
+            <CheerButton buddyId={user.buddyId} />
         </View>
     );
 }

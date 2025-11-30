@@ -6,9 +6,7 @@ export default function CheerButton({ buddyId }) {
     const navigation = useNavigation();
 
     const handleCheer = () => {
-        navigation.navigate('CheerMessageScreen', {
-            buddyId
-        });
+        navigation.navigate('CheerMessageScreen', { buddyId });
     };
 
     return (

@@ -101,7 +101,6 @@ export default function HabitListScreen({ navigation }) {
     // Pull-to-refresh
     const onRefresh = () => {
         setRefreshing(true);
-        // The onSnapshot listener will automatically refresh the data
     };
 
     if (loading) {

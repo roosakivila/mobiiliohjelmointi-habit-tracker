@@ -41,7 +41,7 @@ export default function LoginScreen({ navigation }) {
 
         //Validate form
         if (!validateForm()) {
-            return; // Stops if validation fails
+            return;
         }
 
         setLoading(true);
@@ -98,6 +98,7 @@ export default function LoginScreen({ navigation }) {
                     }
                 }}
                 secureTextEntry={true}
+                autoCapitalize="none"
                 style={[styles.input, errors.password && styles.inputError]} />
 
             {errors.password && (

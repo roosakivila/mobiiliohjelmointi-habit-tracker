@@ -8,11 +8,9 @@ import {
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 
-// Step 1: Create the Context
 // This creates a "container" for our auth data
 const AuthContext = createContext({});
 
-// Step 2: Create the Provider Component
 // This wraps our app and makes auth data available everywhere
 export const AuthProvider = ({ children }) => {
     // State to store the current user
@@ -24,7 +22,6 @@ export const AuthProvider = ({ children }) => {
     // State for error messages
     const [error, setError] = useState(null);
 
-    // Step 3: Set up the auth state listener
     // This runs when the component mounts and listens for auth changes
     useEffect(() => {
         // onAuthStateChanged is a Firebase listener that watches for auth changes
@@ -68,7 +65,7 @@ export const AuthProvider = ({ children }) => {
         return unsubscribe;
     }, []);
 
-    // Step 4: Sign Up Function
+    // Sign Up Function
     const signUp = async (email, password, displayName) => {
         try {
             setError(null);
@@ -87,9 +84,9 @@ export const AuthProvider = ({ children }) => {
             await setDoc(doc(db, 'users', firebaseUser.uid), {
                 displayName: displayName,
                 email: email,
-                buddyId: null, // No buddy connected yet
+                buddyId: null,
                 createdAt: new Date(),
-                pushToken: null // For notifications, added later
+                pushToken: null
             });
 
             // The onAuthStateChanged listener will automatically update the user state
@@ -115,7 +112,7 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // Step 5: Sign In Function
+    // Sign In Function
     const signIn = async (email, password) => {
         try {
             setError(null);
@@ -149,7 +146,7 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // Step 6: Sign Out Function
+    // Sign Out Function
     const logout = async () => {
         try {
             setError(null);
@@ -163,7 +160,7 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // Step 7: Create the value object
+    // The value object
     // This is what components will access when they use the context
     const value = {
         user,           // Current user object or null
@@ -174,7 +171,6 @@ export const AuthProvider = ({ children }) => {
         logout          // Function to sign out
     };
 
-    // Step 8: Return the Provider
     // This makes all the values available to child components
     return (
         <AuthContext.Provider value={value}>
@@ -183,9 +179,7 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
-// Step 9: Create a custom hook for easy access
-// Instead of using useContext(AuthContext) everywhere,
-// components can use useAuth() - it's cleaner!
+// Custom hook for easy access
 export const useAuth = () => {
     const context = useContext(AuthContext);
 

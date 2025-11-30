@@ -10,7 +10,6 @@ export default function CheerMessageScreen({ route, navigation }) {
     const { buddyId } = route.params;
     const { user } = useAuth();
 
-    // Predefined encouraging messages
     const predefinedMessages = [
         "Great job! 🎉",
         "Keep it up! 💪",

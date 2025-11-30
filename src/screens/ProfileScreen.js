@@ -1,11 +1,12 @@
-import { View, Text, Button, StyleSheet, Alert } from 'react-native';
+import { View, Text, Button, StyleSheet, Alert, ScrollView, Image, FlatList, ActivityIndicator } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { useAuth } from '../contexts/AuthContext';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useState, useEffect } from 'react';
 import { Camera, CameraView } from 'expo-camera';
 
+//https://firebase.google.com/docs/firestore/query-data/listen
 // https://www.youtube.com/watch?v=iShltk7YCfM
 
 export default function ProfileScreen({ navigation }) {
@@ -14,6 +15,9 @@ export default function ProfileScreen({ navigation }) {
     const [hasPermission, setHasPermission] = useState(null);
     const [showScanner, setShowScanner] = useState(false);
     const [scanned, setScanned] = useState(false);
+    const [receivedCheers, setReceivedCheers] = useState([]);
+    const [loadingCheers, setLoadingCheers] = useState(true);
+    const [unreadCount, setUnreadCount] = useState(0);
 
 
     useEffect(() => {
@@ -43,6 +47,51 @@ export default function ProfileScreen({ navigation }) {
         };
         fetchBuddyInfo();
     }, [user?.buddyId]);
+
+    // Fetch received cheer messages
+    useEffect(() => {
+        if (!user?.uid) return;
+
+        setLoadingCheers(true);
+
+        const cheersQuery = query(
+            collection(db, 'cheerMessages'),
+            where('toUserId', '==', user.uid),
+            orderBy('createdAt', 'desc')
+        );
+
+        const unsubscribe = onSnapshot(cheersQuery, async (snapshot) => {
+            const cheers = [];
+            let unread = 0;
+
+            for (const docSnap of snapshot.docs) {
+                const cheerData = docSnap.data();
+
+                // Fetch sender info
+                const senderDoc = await getDoc(doc(db, 'users', cheerData.fromUserId));
+                const senderName = senderDoc.exists() ? senderDoc.data().displayName : 'Unknown';
+
+                cheers.push({
+                    id: docSnap.id,
+                    ...cheerData,
+                    senderName,
+                });
+
+                if (!cheerData.read) {
+                    unread++;
+                }
+            }
+
+            setReceivedCheers(cheers);
+            setUnreadCount(unread);
+            setLoadingCheers(false);
+        }, (error) => {
+            console.error('Error fetching cheers:', error);
+            setLoadingCheers(false);
+        });
+
+        return () => unsubscribe();
+    }, [user?.uid]);
 
 
     const handleBarCodeScanned = async ({ type, data }) => {
@@ -184,6 +233,16 @@ export default function ProfileScreen({ navigation }) {
         );
     };
 
+    const markCheerAsRead = async (cheerId) => {
+        try {
+            await updateDoc(doc(db, 'cheerMessages', cheerId), {
+                read: true
+            });
+        } catch (error) {
+            console.error('Error marking cheer as read:', error);
+        }
+    };
+
     if (showScanner) {
         return (
             <View style={styles.container}>
@@ -210,46 +269,104 @@ export default function ProfileScreen({ navigation }) {
 
     // Normal profile view
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Profile</Text>
-            <Text style={styles.info}>Name: {user?.displayName}</Text>
-            <Text style={styles.info}>Email: {user?.email}</Text>
+        <ScrollView style={styles.scrollContainer}>
+            <View style={styles.container}>
+                <Text style={styles.title}>Profile</Text>
+                <Text style={styles.info}>Name: {user?.displayName}</Text>
+                <Text style={styles.info}>Email: {user?.email}</Text>
 
-            {/* My QR Code */}
-            <View style={styles.qrSection}>
-                <Text style={styles.sectionTitle}>My Buddy Code</Text>
-                <QRCode
-                    value={user.uid}
-                    size={200}
-                />
+                {/* My QR Code */}
+                <View style={styles.qrSection}>
+                    <Text style={styles.sectionTitle}>My Buddy Code</Text>
+                    <QRCode
+                        value={user.uid}
+                        size={200}
+                    />
+                </View>
+
+                {/* Buddy Connection Status */}
+                {buddyInfo ? (
+                    <View style={styles.buddySection}>
+                        <Text style={styles.sectionTitle}>My Buddy:</Text>
+                        <Text style={styles.buddyName}>{buddyInfo.displayName}</Text>
+                        <Button title="Disconnect Buddy" onPress={() => handleDisconnectBuddy()} />
+                    </View>
+                ) : (
+                    <View style={styles.buddySection}>
+                        <Text>No buddy connected</Text>
+                        <Button title="Scan Buddy's QR Code" onPress={openScanner} />
+                    </View>
+                )}
+
+                {/* Received Cheers Section */}
+                <View style={styles.cheersSection}>
+                    <Text style={styles.sectionTitle}>
+                        Received Cheers {unreadCount > 0 && `(${unreadCount} new)`}
+                    </Text>
+
+                    {loadingCheers ? (
+                        <ActivityIndicator size="large" color="#0066cc" />
+                    ) : receivedCheers.length === 0 ? (
+                        <Text style={styles.emptyText}>No cheers yet! 😊</Text>
+                    ) : (
+                        <FlatList
+                            data={receivedCheers}
+                            keyExtractor={(item) => item.id}
+                            scrollEnabled={false}
+                            renderItem={({ item }) => (
+                                <View style={[
+                                    styles.cheerCard,
+                                    !item.read && styles.cheerCardUnread
+                                ]}>
+                                    <View style={styles.cheerHeader}>
+                                        <Text style={styles.cheerSender}>
+                                            From: {item.senderName}
+                                        </Text>
+                                        {!item.read && (
+                                            <View style={styles.unreadBadge}>
+                                                <Text style={styles.unreadText}>NEW</Text>
+                                            </View>
+                                        )}
+                                    </View>
+
+                                    <Image
+                                        source={{ uri: item.gifUrl }}
+                                        style={styles.cheerGif}
+                                        resizeMode="cover"
+                                    />
+
+                                    <Text style={styles.cheerMessage}>{item.message}</Text>
+
+                                    <Text style={styles.cheerDate}>
+                                        {item.createdAt?.toDate().toLocaleDateString()}
+                                    </Text>
+
+                                    {!item.read && (
+                                        <Button
+                                            title="Mark as Read"
+                                            onPress={() => markCheerAsRead(item.id)}
+                                        />
+                                    )}
+                                </View>
+                            )}
+                        />
+                    )}
+                </View>
+
+                <Button title="Logout" onPress={handleLogout} />
             </View>
-
-            {/* Buddy Connection Status */}
-            {buddyInfo ? (
-                <View style={styles.buddySection}>
-                    <Text style={styles.sectionTitle}>My Buddy:</Text>
-                    <Text style={styles.buddyName}>{buddyInfo.displayName}</Text>
-                    <Button title="Disconnect Buddy" onPress={() => handleDisconnectBuddy()} />
-                </View>
-            ) : (
-                <View style={styles.buddySection}>
-                    <Text>No buddy connected</Text>
-                    <Button title="Scan Buddy's QR Code" onPress={openScanner} />
-                </View>
-            )}
-
-            <Button title="Logout" onPress={handleLogout} />
-        </View>
+        </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    scrollContainer: {
         flex: 1,
-        justifyContent: 'center',
+        backgroundColor: '#f5f5f5',
+    },
+    container: {
         alignItems: 'center',
         padding: 20,
-        backgroundColor: '#f5f5f5',
     },
     title: {
         fontSize: 24,
@@ -298,5 +415,69 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: 50,
         fontWeight: 'bold',
+    },
+    // New styles for cheers section
+    cheersSection: {
+        width: '100%',
+        marginVertical: 20,
+    },
+    emptyText: {
+        textAlign: 'center',
+        color: '#999',
+        fontSize: 16,
+        marginVertical: 20,
+    },
+    cheerCard: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#ddd',
+    },
+    cheerCardUnread: {
+        borderColor: '#0066cc',
+        borderWidth: 2,
+        backgroundColor: '#f0f8ff',
+    },
+    cheerHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    cheerSender: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333',
+    },
+    unreadBadge: {
+        backgroundColor: '#ff3b30',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    unreadText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
+    cheerGif: {
+        width: '100%',
+        height: 200,
+        borderRadius: 8,
+        marginVertical: 10,
+    },
+    cheerMessage: {
+        fontSize: 18,
+        textAlign: 'center',
+        marginVertical: 10,
+        fontWeight: '500',
+    },
+    cheerDate: {
+        fontSize: 12,
+        color: '#999',
+        textAlign: 'right',
+        marginTop: 8,
     },
 });
